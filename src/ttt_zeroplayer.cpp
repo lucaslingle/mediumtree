@@ -1,9 +1,9 @@
 #include <iostream>
 #include "ttt.hpp"
-#include "tree.hpp"
+#include "minimax.hpp"
 
 int main() {
-    Tree<TicTacToeState> tree;
+    MinimaxTree<TicTacToeState> tree;
     tree.grow();
     tree.eval();
     std::cout << tree.get_value() << std::endl;

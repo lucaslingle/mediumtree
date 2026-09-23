@@ -1,11 +1,11 @@
 #include <iostream>
 #include <cstddef>
 #include "ttt.hpp"
-#include "tree.hpp"
+#include "minimax.hpp"
 
 int main() {
     TicTacToeState game;
-    Tree<TicTacToeState> tree;
+    MinimaxTree<TicTacToeState> tree;
     tree.grow();
     tree.eval();
 

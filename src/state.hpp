@@ -13,12 +13,12 @@ enum Status {
 template <typename PieceType, std::size_t StateDim, std::size_t ActionCount>
 class AbstractState {
 public:
-    friend std::ostream& operator<<(std::ostream &os, const AbstractState<PieceType, StateDim, ActionCount> &state) {
-        state.print(os);
-        return os;
+    friend std::ostream& operator<<(std::ostream &os, const AbstractState &state) {
+        return state.print(os);
     }
     AbstractState() = default;
-    std::size_t get_num_actions() const { return ActionCount; }
+    static constexpr std::size_t get_state_dim() { return StateDim; }
+    static constexpr std::size_t get_num_actions() { return ActionCount; }
     std::string get_status_string() const;
     bool get_turn() const { return turn; }
     

@@ -5,30 +5,30 @@ Status TicTacToeState::get_status() const {
         // check row i
         if (board[3 * i + 0] == board[3 * i + 1] && board[3 * i + 1] == board[3 * i + 2]) {
             if (board[3 * i] == 1)
-                return PlusWon;
-            if (board[3 * i] == -1)
-                return MinusWon;
+                return PlayerOneWon;
+            if (board[3 * i] == 2)
+                return PlayerTwoWon;
         }
         // check column i
         if (board[0 + i] == board[3 + i] && board[3 + i] == board[6 + i]) {
             if (board[0 + i] == 1)
-                return PlusWon;
-            if (board[0 + i] == -1)
-                return MinusWon;
+                return PlayerOneWon;
+            if (board[0 + i] == 2)
+                return PlayerTwoWon;
         }
     }
     // check diagonals
     if (board[3 * 0 + 0] == board[3 * 1 + 1] && board[3 * 1 + 1] == board[3 * 2 + 2]) {
         if (board[3 * 0 + 0] == 1)
-            return PlusWon;
-        if (board[3 * 0 + 0] == -1)
-            return MinusWon;
+            return PlayerOneWon;
+        if (board[3 * 0 + 0] == 2)
+            return PlayerTwoWon;
     }
     if (board[3 * 0 + 2] == board[3 * 1 + 1] && board[3 * 1 + 1] == board[3 * 2 + 0]) {
         if (board[3 * 0 + 2] == 1)
-            return PlusWon;
-        if (board[3 * 0 + 2] == -1)
-            return MinusWon;
+            return PlayerOneWon;
+        if (board[3 * 0 + 2] == 2)
+            return PlayerTwoWon;
     }
     for (int i = 0; i != 9; ++i)
         if (board[i] == 0)
@@ -68,6 +68,6 @@ std::ostream& TicTacToeState::print(std::ostream &os) const {
 TicTacToeState::TicTacToeState(const TicTacToeState &state, std::size_t action)
 : AbstractState(state, action) {
     is_valid_thrower(action);
-    board[action] = get_turn() ? 1 : -1;
+    board[action] = get_turn() ? 1 : 2;
     turn = !get_turn();
 }

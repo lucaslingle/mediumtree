@@ -5,8 +5,8 @@
 
 enum Status {
     InProgress,
-    PlusWon,
-    MinusWon,
+    PlayerOneWon,
+    PlayerTwoWon,
     Tie
 };
 
@@ -38,9 +38,9 @@ template <typename PieceType, std::size_t StateDim, std::size_t ActionCount>
 inline std::string AbstractState<PieceType, StateDim, ActionCount>::get_status_string() const {
     Status s = get_status();
     switch (s) {
-        case Status::InProgress: return "in progress";
-        case Status::PlusWon:    return "1 won";
-        case Status::MinusWon:   return "-1 won";
-        default:                 return "tie";
+        case Status::InProgress:   return "In Progress";
+        case Status::PlayerOneWon: return "Player 1 won";
+        case Status::PlayerTwoWon: return "Player 2 won";
+        default:                   return "Tie";
     }
 }

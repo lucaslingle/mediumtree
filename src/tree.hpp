@@ -13,12 +13,12 @@ template <typename State> class Node {
 friend class Tree<State>; 
 private:
     Node();
-    Node(Node* p, int action);
+    Node(Node* p, std::size_t action);
     void populate_valid(const State &state);
     void eval();
 
     Node *parent;
-    int prev_action;
+    std::size_t prev_action;
     State state;
     double value;
     std::array<bool, State::get_num_actions()> valid;
@@ -35,7 +35,7 @@ public:
     void grow();
     void eval();
     void user_play(std::size_t action);
-    int computer_play();
+    std::size_t computer_play();
 };
 
 template <typename State>
@@ -46,13 +46,13 @@ void Node<State>::populate_valid(const State &state) {
 
 template <typename State>
 Node<State>::Node() : 
-    parent(nullptr), prev_action(-1), state(State()), value(0.0) 
+    parent(nullptr), prev_action(0), state(State()), value(0.0) 
 {
     populate_valid(state);
 }
 
 template <typename State>
-Node<State>::Node(Node *p, int action) :
+Node<State>::Node(Node *p, std::size_t action) :
     parent(p), prev_action(action), state(State(p->state, action)), value(0.0)
 {
     populate_valid(state);
@@ -65,7 +65,7 @@ void Node<State>::eval() {
         if (status == Tie)
             value = 0;
         else
-            value = (status == PlusWon) ? 1 : -1;
+            value = (status == PlayerOneWon) ? 1 : -1;
     } else {
         bool is_max = (state.get_turn() == 1);
         double best_val = (is_max) ? -100 : 100;
@@ -113,12 +113,12 @@ void Tree<State>::user_play(std::size_t action) {
 }
 
 template <typename State>
-int Tree<State>::computer_play() {
+std::size_t Tree<State>::computer_play() {
     if (root->state.get_status() != InProgress)
         throw std::runtime_error("Game is not in progress.");
 
     auto best = std::find(root->action_values.begin(), root->action_values.end(), root->value);
-    int action = std::distance(root->action_values.begin(), best);
+    std::size_t action = std::distance(root->action_values.begin(), best);
 
     // This check shouldnt trigger since game is InProgress
     // there should be at least one action whose action_value is not a mask value

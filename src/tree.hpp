@@ -5,6 +5,7 @@
 #include <memory>
 #include <cstddef>
 #include "state.hpp"
+#include "tree.hpp"
 
 template <typename State> class Tree;
 
@@ -36,14 +37,6 @@ public:
     void user_play(std::size_t action);
     int computer_play();
 };
-
-#include <array>
-#include <algorithm>
-#include <queue>
-#include <stdexcept>
-#include <memory>
-#include <cstddef>
-#include "tree.hpp"
 
 template <typename State>
 void Node<State>::populate_valid(const State &state) {

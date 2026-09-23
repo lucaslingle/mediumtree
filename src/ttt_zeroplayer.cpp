@@ -1,5 +1,5 @@
 #include <iostream>
-#include "tictactoe.hpp"
+#include "ttt.hpp"
 #include "tree.hpp"
 
 int main() {

@@ -1,4 +1,40 @@
-#include "tictactoe.hpp"
+#include "ttt.hpp"
+
+TicTacToeState::TicTacToeState(const TicTacToeState &state, std::size_t action)
+: AbstractState(state, action) {
+    is_valid_thrower(action);
+    board[action] = get_turn() ? 1 : 2;
+    turn = !get_turn();
+}
+
+std::ostream& TicTacToeState::print(std::ostream &os) const {
+    for (std::size_t i = 0; i != 9; ++i) {
+        if (i % 3 == 0)
+            os << "\n";
+        os << board[i] << " ";
+    }
+    os << "\n";
+    return os;
+}
+
+bool TicTacToeState::is_valid(std::size_t action) const {
+    if (get_status() != InProgress)
+        return false;
+    if (action >= get_num_actions())
+        return false;
+    if (board[action] != 0)
+        return false;
+    return true;
+}
+
+void TicTacToeState::is_valid_thrower(std::size_t action) const {
+    if (get_status() != InProgress)
+        throw std::runtime_error("Game is not in progress.");
+    if (action >= get_num_actions())
+        throw std::invalid_argument("Invalid action.");
+    if (board[action] != 0)
+        throw std::invalid_argument("Invalid action.");
+}
 
 Status TicTacToeState::get_status() const {
     for (int i = 0; i != 3; ++i) {
@@ -34,40 +70,4 @@ Status TicTacToeState::get_status() const {
         if (board[i] == 0)
             return InProgress;
     return Tie;
-}
-
-bool TicTacToeState::is_valid(std::size_t action) const {
-    if (get_status() != InProgress)
-        return false;
-    if (action >= get_num_actions())
-        return false;
-    if (board[action] != 0)
-        return false;
-    return true;
-}
-
-void TicTacToeState::is_valid_thrower(std::size_t action) const {
-    if (get_status() != InProgress)
-        throw std::runtime_error("Game is not in progress.");
-    if (action >= get_num_actions())
-        throw std::invalid_argument("Invalid action.");
-    if (board[action] != 0)
-        throw std::invalid_argument("Invalid action.");
-}
-
-std::ostream& TicTacToeState::print(std::ostream &os) const {
-    for (std::size_t i = 0; i != 9; ++i) {
-        if (i % 3 == 0)
-            os << "\n";
-        os << board[i] << " ";
-    }
-    os << "\n";
-    return os;
-}
-
-TicTacToeState::TicTacToeState(const TicTacToeState &state, std::size_t action)
-: AbstractState(state, action) {
-    is_valid_thrower(action);
-    board[action] = get_turn() ? 1 : 2;
-    turn = !get_turn();
 }

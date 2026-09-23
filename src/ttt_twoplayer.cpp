@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstddef>
-#include "tictactoe.hpp"
+#include "ttt.hpp"
 
 int main() {
     TicTacToeState game;

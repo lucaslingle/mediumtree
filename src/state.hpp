@@ -22,10 +22,10 @@ public:
     std::string get_status_string() const;
     bool get_turn() const { return turn; }
     
-    virtual Status get_status() const = 0;
+    virtual std::ostream& print(std::ostream& os) const = 0;
     virtual bool is_valid(std::size_t action) const = 0;
     virtual void is_valid_thrower(std::size_t action) const = 0;
-    virtual std::ostream& print(std::ostream& os) const = 0;
+    virtual Status get_status() const = 0;
     virtual ~AbstractState() = default;
 protected:
     std::array<PieceType, StateDim> board = {};

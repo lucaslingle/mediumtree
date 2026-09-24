@@ -1,18 +1,20 @@
+#include <stdexcept>
 #include "c4.hpp"
 
 ConnectFourState::ConnectFourState(const ConnectFourState &state, std::size_t action)
 : AbstractState(state, action) {
     is_valid_thrower(action);
-    for (std::size_t row = 5; row != -1; --row)
+    for (int row = 5; row != -1; --row)
         if (board[row * 7 + action] == 0) {
             board[row * 7 + action] = get_turn() ? 1 : 2;
             break;
         }
     turn = !get_turn();
+    status = compute_status();
 }
 
 std::ostream& ConnectFourState::print(std::ostream &os) const {
-    for (std::size_t i = 0; i != 6 * 7; ++i) {
+    for (int i = 0; i != 6 * 7; ++i) {
         if (i % 7 == 0)
             os << "\n";
         os << board[i] << " ";
@@ -26,10 +28,9 @@ bool ConnectFourState::is_valid(std::size_t action) const {
         return false;
     if (action >= get_num_actions())
         return false;
-    for (std::size_t row = 5; row != -1; --row)
-        if (board[row * 7 + action] == 0)
-            return true;
-    return false;
+    if (board[0 * 7 + action] != 0)
+        return false;
+    return true;
 }
 
 void ConnectFourState::is_valid_thrower(std::size_t action) const {
@@ -37,17 +38,11 @@ void ConnectFourState::is_valid_thrower(std::size_t action) const {
         throw std::runtime_error("Game is not in progress.");
     if (action >= get_num_actions())
         throw std::invalid_argument("Invalid action.");
-    bool valid = false;
-    for (std::size_t row = 5; row != -1; --row)
-        if (board[row * 7 + action] == 0) {
-            valid = true;
-            break;
-        }
-    if (!valid)
+    if (board[0 * 7 + action] != 0)
         throw std::invalid_argument("Invalid action.");
 }
 
-Status ConnectFourState::get_status() const {
+Status ConnectFourState::compute_status() const {
     // check vertical
     for (int col = 0; col != 7; ++col) {
         for (int top_row = 0; top_row != 3; ++top_row) {

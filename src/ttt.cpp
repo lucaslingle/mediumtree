@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "ttt.hpp"
 
 TicTacToeState::TicTacToeState(const TicTacToeState &state, std::size_t action)
@@ -5,6 +6,7 @@ TicTacToeState::TicTacToeState(const TicTacToeState &state, std::size_t action)
     is_valid_thrower(action);
     board[action] = get_turn() ? 1 : 2;
     turn = !get_turn();
+    status = compute_status();
 }
 
 std::ostream& TicTacToeState::print(std::ostream &os) const {
@@ -36,7 +38,7 @@ void TicTacToeState::is_valid_thrower(std::size_t action) const {
         throw std::invalid_argument("Invalid action.");
 }
 
-Status TicTacToeState::get_status() const {
+Status TicTacToeState::compute_status() const {
     for (int i = 0; i != 3; ++i) {
         // check row i
         if (board[3 * i + 0] == board[3 * i + 1] && board[3 * i + 1] == board[3 * i + 2]) {

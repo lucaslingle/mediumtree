@@ -11,5 +11,5 @@ public:
     std::ostream& print(std::ostream& os) const override;
     bool is_valid(std::size_t action) const override;
     void is_valid_thrower(std::size_t action) const override;
-    Status get_status() const override;
+    Status compute_status() const override;
 };

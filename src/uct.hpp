@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <cmath>
 #include <random>
+#include <limits>
+#include <array>
 
 template <typename State> class UCTNode {
 public:
@@ -29,14 +31,14 @@ void UCTNode<State>::populate_valid(const State &state) {
 
 template <typename State>
 UCTNode<State>::UCTNode()
-: parent(nullptr), state(State()), value(0.0)
+: parent(nullptr), state(State()), value(0.0), num_visits(0)
 {
     populate_valid(state);
 }
 
 template <typename State>
 UCTNode<State>::UCTNode(UCTNode *p, std::size_t action)
-: parent(p), state(State(p->state, action)), value(0.0)
+: parent(p), state(State(p->state, action)), value(0.0), num_visits(0)
 {
     populate_valid(state);
 }
@@ -54,47 +56,52 @@ template <typename State> class UCTTree {
 private:
     std::unique_ptr<UCTNode<State>> root = std::unique_ptr<UCTNode<State>>(new UCTNode<State>());
     double coef;
-    std::mt19937 rng(std::random_device{}());
+    std::mt19937 rng{std::random_device{}()};
 public:
-    UCTTree(double coef): c(coef) { };
+    UCTTree(double c): coef(c) { };
     double get_value() const { return root->value; }
     void user_play(std::size_t action);
     std::size_t computer_play(std::size_t num_rollouts);
 
-    UCTNode* selection() const;
-    UCTNode* expansion(UCTNode*);
-    Status simulation(UCTNode*);
-    void backpropagation(UCTNode*, Status);
-    void add_node();
+    UCTNode<State>* selection() const;
+    UCTNode<State>* expansion(UCTNode<State>*);
+    Status simulation(UCTNode<State>*);
+    void backpropagation(UCTNode<State>*, Status);
 };
 
 template <typename State>
-UCTNode* selection() {
-    using A = State::get_num_actions();
-    UCTNode* node = root.get();
+UCTNode<State>* UCTTree<State>::selection() const {
+    constexpr std::size_t A = State::get_num_actions();
+    UCTNode<State> *node = root.get();
     while (!node->is_leaf() && node->state.get_status() == InProgress) {
         std::array<double, A> upper_bounds = {};
         for (std::size_t i = 0; i != A; ++i) {
-            upper_bounds[i] = node->childrens[i].value;
-            if (valid[i])
-                upper_bounds[i] += coef * std::sqrt(std::log(node->num_visits) / node->childrens[i].num_visits);
-            else
-                upper_bounds[i] = -100;
+            if (node->valid[i]) {
+                if (node->childrens[i]) {
+                    upper_bounds[i] = node->childrens[i]->value;
+                    upper_bounds[i] += coef * std::sqrt(std::log(node->num_visits) / node->childrens[i]->num_visits);
+                } else {
+                    upper_bounds[i] = std::numeric_limits<double>::infinity();
+                }
+            } else {
+                upper_bounds[i] = -std::numeric_limits<double>::infinity();
+            }
         }
-        node = std::find(upper_bounds.begin(), upper_bounds.end(), root->value).get();
+        auto iter = std::max_element(upper_bounds.begin(), upper_bounds.end());
+        node = (*iter).get();
     }
     // when we get here we have either a leaf or a terminal node
     return node;
 }
 
 template <typename State>
-UCTNode* expansion(UCTNode *node) {
+UCTNode<State>* UCTTree<State>::expansion(UCTNode<State> *node) {
     // node is leaf or terminal
     if (node->state.get_status() != InProgress) // terminal
         return node;
-    using A = State::get_num_actions();
+    constexpr std::size_t A = State::get_num_actions();
     for (std::size_t i = 0; i != A; ++i)  // leaf
-        if (node->childrens[i] == nullptr) {
+        if (node->valid[i] && node->childrens[i] == nullptr) {
             node->childrens[i] = std::unique_ptr<UCTNode<State>>(new UCTNode<State>(node, i));
             return node->childrens[i].get();
         }
@@ -102,14 +109,14 @@ UCTNode* expansion(UCTNode *node) {
 }
 
 template <typename State>
-Status simulation(UCTNode *node) {
+Status UCTTree<State>::simulation(UCTNode<State> *node) {
     // node is leaf or terminal
     if (node->state.get_status() != InProgress)
         return node->state.get_status();
-    using A = State::get_num_actions();
+
+    constexpr std::size_t A = State::get_num_actions();
     State state = node->state;
     std::array<bool, A> valid;
-
     while (state.get_status() == InProgress) {
         for (std::size_t i = 0; i != State::get_num_actions(); ++i)
             valid[i] = state.is_valid(i);
@@ -123,28 +130,35 @@ Status simulation(UCTNode *node) {
 }
 
 template <typename State>
-void backpropagation(UCTNode *node, Status s) {
-    // node is terminal, so assign value and then backprop somehow
-    double terminal_value;
-    bool terminal_turn = node->state.get_turn();
-    Status terminal_status = node->state.get_status();
-    if (terminal_turn && terminal_status == PlayerOneWon)
-        terminal_value = 1.0;
-    if (!terminal_turn && terminal_status == PlayerOneWon)
-        terminal_value = 0.0;
-    if (terminal_turn && terminal_status == PlayerTwoWon)
-        terminal_value = 0.0;
-    if (!terminal_turn && terminal_status == PlayerTwoWon)
-        terminal_value = 1.0;
-    if (terminal_status == Tie)
-        terminal_value = 0.5;
+void UCTTree<State>::backpropagation(UCTNode<State> *node, Status terminal_status) {
+    // node is leaf or terminal, so assign value and then backprop
+    double rollout_value;
+    bool leaf_turn = node->state.get_turn();
 
-    node->value = terminal_value;
-    while (node = node->parent) {
-        double termval = (node.get_turn() == terminal_turn) ? terminal_value : (1.0 - terminal_value);
+    // The usual convention is to score each node from the point of view 
+    // of the player who made the move into it. So winning rollouts from
+    // leaf are actually scored as bad, etc.
+    if (leaf_turn && terminal_status == PlayerOneWon)
+        rollout_value = 0.0;
+    if (!leaf_turn && terminal_status == PlayerOneWon)
+        rollout_value = 1.0;
+    if (leaf_turn && terminal_status == PlayerTwoWon)
+        rollout_value = 1.0;
+    if (!leaf_turn && terminal_status == PlayerTwoWon)
+        rollout_value = 0.0;
+    if (terminal_status == Tie)
+        rollout_value = 0.5;
+    if (terminal_status == InProgress)
+        throw std::runtime_error("Got terminal status InProgress.");
+
+    node->value = rollout_value;
+    node->num_visits += 1;
+    while ((node = node->parent)) {
+        double rel_rollout_value = (nod->state.get_turn() == leaf_turn) ? rollout_value : (1.0 - rollout_value);
         double &value = node->value;
         std::size_t &num_visits = node->num_visits;
-        value *= (num_visits / (num_visits + 1));
-        value += (1 / (num_visits + 1)) * termval;
+        value *= (static_cast<double>(num_visits) / (num_visits + 1));
+        value += (1.0 / (num_visits + 1)) * rel_rollout_value;
+        num_visits += 1;
     }
 }

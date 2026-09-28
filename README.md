@@ -28,3 +28,27 @@ Start a Tic Tac Toe game against the computer as follows:
 ./build/ttt_app
 ```
 The board and controls for Tic Tac Toe are the same as [smalltree](https://github.com/lucaslingle/smalltree), except that 1 and 2 are used for X and O.
+
+### Testing
+Unit tests use [GoogleTest](https://github.com/google/googletest), which CMake downloads automatically the first time you configure. The build steps above also produce `build/unit_tests`. Run the tests with:
+```bash
+ctest --test-dir build
+```
+or run the test executable directly for GoogleTest's own output:
+```bash
+./build/unit_tests
+```
+Tests live in `tests/`. A few UCT tests depend on random rollouts, so they can fail by chance, though this should be rare.
+
+To build without the tests (and skip the GoogleTest download), configure with:
+```bash
+cmake -S . -B build -DMEDIUMTREE_BUILD_TESTS=OFF
+```
+
+### References
+```
+https://en.wikipedia.org/wiki/Tic-tac-toe
+https://en.wikipedia.org/wiki/Connect_Four
+https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
+https://www.researchgate.net/publication/221112399_Bandit_Based_Monte-Carlo_Planning
+```
